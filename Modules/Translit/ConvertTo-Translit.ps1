@@ -2,6 +2,7 @@
 #Requires -Version 3
 
 
+#Encoding -Required "Windows 1251"
 Function ConvertTo-Translit {
     <#
     .SYNOPSIS
@@ -35,7 +36,11 @@ Function ConvertTo-Translit {
 
         [Parameter()]
         [ValidateSet("bgn-pcgn-1947", "gost-r-52535.1-2006")]
-        [String]$Standard = "bgn-pcgn-1947"
+        [String]$Standard = "bgn-pcgn-1947",
+
+        [Parameter()]
+        [ValidateSet("Uppercase", "Lowercase", "Capitalize")]
+        [String]$Format = "Capitalize"
     )
 
 
@@ -152,6 +157,18 @@ Function ConvertTo-Translit {
         }
         Default {
             $Result = (Start-Main -String $String -StandardSet $BGN_PCGN_1947)
+        }
+    }
+
+    Switch($Format) {
+        "Uppercase" {
+            $Result = $Result.ToUpper()
+        }
+        "Lowercase" {
+            $Result = $Result.ToLower()
+        }
+        Default {
+            $Result = (Get-Culture).TextInfo.ToTitleCase($Result.ToLower())
         }
     }
 
