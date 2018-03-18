@@ -1,15 +1,4 @@
-# New repository README.md
-
-
-## Installation:
-- Copy files from `.\Modules\Translit\*` to `C:\Program Files\WindowsPowerShell\Modules\Translit\`
-- Restart PowerShell console
-
-```
-# Check:
-Get-Module -ListAvailable *Translit*
-Get-Command -Name *ConvertTo-Translit*
-```
+# Transliteration PowerShell Module (Russian-English)
 
 ## Transliteration Standards:
 - `BGN/PCGN 1947 System`
