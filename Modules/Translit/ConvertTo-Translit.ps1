@@ -29,7 +29,9 @@ function ConvertTo-Translit {
 
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory, ValueFromPipeline)]
+        [Parameter(Mandatory,
+        ValueFromPipeline,
+        HelpMessage = "Enter string for transliteration")]
         [String]
         $String,
 
@@ -44,90 +46,89 @@ function ConvertTo-Translit {
         $Format = "Capitalize"
     )
 
-    Process {
+    Begin {
         $BGN_PCGN_1947 = @{
-                "А" = "A";
-                "Б" = "B";
-                "В" = "V";
-                "Г" = "G";
-                "Д" = "D";
-                "Е" = "E";
-                "Ё" = "E";
-                "Ж" = "ZH";
-                "З" = "Z";
-                "И" = "I";
-                "Й" = "Y";
-                "К" = "K";
-                "Л" = "L";
-                "М" = "M";
-                "Н" = "N";
-                "О" = "O";
-                "П" = "P";
-                "Р" = "R";
-                "С" = "S";
-                "Т" = "T";
-                "У" = "U";
-                "Ф" = "F";
-                "Х" = "KH";
-                "Ц" = "TS";
-                "Ч" = "CH";
-                "Ш" = "SH";
-                "Щ" = "SHCH";
-                "Ь" = "";
-                "Ы" = "Y";
-                "Ъ" = "";
-                "Э" = "E";
-                "Ю" = "YU";
-                "Я" = "YA";
-                "ЬЕ" = "YE"
-            }
-
-        $GOST_R_52535_1_2006 = @{
-                "А" = "A";
-                "Б" = "B";
-                "В" = "V";
-                "Г" = "G";
-                "Д" = "D";
-                "Е" = "E";
-                "Ё" = "E";
-                "Ж" = "ZH";
-                "З" = "Z";
-                "И" = "I";
-                "Й" = "I";
-                "К" = "K";
-                "Л" = "L";
-                "М" = "M";
-                "Н" = "N";
-                "О" = "O";
-                "П" = "P";
-                "Р" = "R";
-                "С" = "S";
-                "Т" = "T";
-                "У" = "U";
-                "Ф" = "F";
-                "Х" = "KH";
-                "Ц" = "TC";
-                "Ч" = "CH";
-                "Ш" = "SH";
-                "Щ" = "SHCH";
-                "Ь" = "";
-                "Ы" = "Y";
-                "Ъ" = "";
-                "Э" = "E";
-                "Ю" = "IU";
-                "Я" = "IA";
-                "ЬЕ" = "E"
+            "А" = "A"
+            "Б" = "B"
+            "В" = "V"
+            "Г" = "G"
+            "Д" = "D"
+            "Е" = "E"
+            "Ё" = "E"
+            "Ж" = "ZH"
+            "З" = "Z"
+            "И" = "I"
+            "Й" = "Y"
+            "К" = "K"
+            "Л" = "L"
+            "М" = "M"
+            "Н" = "N"
+            "О" = "O"
+            "П" = "P"
+            "Р" = "R"
+            "С" = "S"
+            "Т" = "T"
+            "У" = "U"
+            "Ф" = "F"
+            "Х" = "KH"
+            "Ц" = "TS"
+            "Ч" = "CH"
+            "Ш" = "SH"
+            "Щ" = "SHCH"
+            "Ь" = ""
+            "Ы" = "Y"
+            "Ъ" = ""
+            "Э" = "E"
+            "Ю" = "YU"
+            "Я" = "YA"
+            "ЬЕ" = "YE"
         }
 
+        $GOST_R_52535_1_2006 = @{
+            "А" = "A"
+            "Б" = "B"
+            "В" = "V"
+            "Г" = "G"
+            "Д" = "D"
+            "Е" = "E"
+            "Ё" = "E"
+            "Ж" = "ZH"
+            "З" = "Z"
+            "И" = "I"
+            "Й" = "I"
+            "К" = "K"
+            "Л" = "L"
+            "М" = "M"
+            "Н" = "N"
+            "О" = "O"
+            "П" = "P"
+            "Р" = "R"
+            "С" = "S"
+            "Т" = "T"
+            "У" = "U"
+            "Ф" = "F"
+            "Х" = "KH"
+            "Ц" = "TC"
+            "Ч" = "CH"
+            "Ш" = "SH"
+            "Щ" = "SHCH"
+            "Ь" = ""
+            "Ы" = "Y"
+            "Ъ" = ""
+            "Э" = "E"
+            "Ю" = "IU"
+            "Я" = "IA"
+            "ЬЕ" = "E"
+        }
+    }
+
+    Process {
         Switch($Standard) {
             "bgn-pcgn-1947" {
                 [Hashtable]$SelectedStandardSet = $BGN_PCGN_1947
             }
             "gost-r-52535.1-2006" {
                 [Hashtable]$SelectedStandardSet = $GOST_R_52535_1_2006
-            }
-            Default {
-                Return 1
             }
         }
 
@@ -145,8 +146,8 @@ function ConvertTo-Translit {
                 [String]$Previous = $Char
             }
             [String]$WordCommit = $NewWordArray -join ""
-            $NewWordArray = @()
             [Array]$StringCommit += $WordCommit
+            $NewWordArray = @()
             $WordCommit = @()
         }
 
@@ -162,11 +163,8 @@ function ConvertTo-Translit {
             "Capitalize" {
                 $Result = (Get-Culture).TextInfo.ToTitleCase($Result.ToLower())
             }
-            Default {
-                Return 2
-            }
         }
-        
+
         $Result
     }
 }
