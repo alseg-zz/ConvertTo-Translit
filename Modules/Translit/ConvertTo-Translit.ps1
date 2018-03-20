@@ -41,7 +41,7 @@ function ConvertTo-Translit {
         [Parameter()]
         [ValidateSet("Uppercase", "Lowercase", "Capitalize")]
         [String]
-        $Format
+        $Format = "Capitalize"
     )
 
     Process {
@@ -127,7 +127,7 @@ function ConvertTo-Translit {
                 [Hashtable]$SelectedStandardSet = $GOST_R_52535_1_2006
             }
             Default {
-                Write-Error "Error"
+                Return 1
             }
         }
 
@@ -163,16 +163,10 @@ function ConvertTo-Translit {
                 $Result = (Get-Culture).TextInfo.ToTitleCase($Result.ToLower())
             }
             Default {
-                Break
+                Return 2
             }
         }
         
         $Result
     }
 }
-
-
-
-
-
-"Иванов Иван Иванович ааААААааааа" | ConvertTo-Translit
