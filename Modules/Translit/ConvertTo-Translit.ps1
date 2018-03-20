@@ -17,6 +17,9 @@ function ConvertTo-Translit {
     .PARAMETER Standard
         Standard name for transliteration.
 
+    .PARAMETER Format
+        Format for output, "as is" by default.
+
     .LINK
         https://github.com/alseg/ConvertTo-Translit
 
@@ -24,7 +27,28 @@ function ConvertTo-Translit {
         .
 
     .EXAMPLE
-        PS> ConvertTo-Translit -String "Иванов Пётр Геннадьевич" -Standard gost-r-52535.1-2006
+        ConvertTo-Translit -String "ИвАн фёДОрОвИч КрУзеншТеРН"
+
+        IvAn feDOrOvIch KrUzenshTeRN
+
+    .EXAMPLE
+        ConvertTo-Translit -String "ИвАн фёДОрОвИч КрУзеншТеРН" -Standard gost-r-52535.1-2006
+
+        IvAn feDOrOvIch KrUzenshTeRN
+    .EXAMPLE
+        ConvertTo-Translit -String "ИвАн фёДОрОвИч КрУзеншТеРН" -Format Uppercase -Standard gost-r-52535.1-2006
+
+        IVAN FEDOROVICH KRUZENSHTERN
+    .EXAMPLE
+        "ИвАн фёДОрОвИч КрУзеншТеРН", "пеЧкИН ИгОРЬ ИВАновиЧ" | ConvertTo-Translit
+
+        IvAn feDOrOvIch KrUzenshTeRN
+        peCHkIN IgOR IVAnoviCH
+    .EXAMPLE
+        "ИвАн фёДОрОвИч КрУзеншТеРН", "пеЧкИН ИгОРЬ ИВАновиЧ" | ConvertTo-Translit -Format Capitalize -Standard bgn-pcgn-1947
+
+        Ivan Fedorovich Kruzenshtern
+        Pechkin Igor Ivanovich
     #>
 
     [CmdletBinding()]
@@ -43,11 +67,11 @@ function ConvertTo-Translit {
         [Parameter()]
         [ValidateSet("Uppercase", "Lowercase", "Capitalize")]
         [String]
-        $Format = "Capitalize"
+        $Format
     )
 
-    Begin {
-        $BGN_PCGN_1947 = @{
+    begin {
+        [Hashtable]$BGN_PCGN_1947 = @{
             "А" = "A"
             "Б" = "B"
             "В" = "V"
@@ -84,7 +108,7 @@ function ConvertTo-Translit {
             "ЬЕ" = "YE"
         }
 
-        $GOST_R_52535_1_2006 = @{
+        [Hashtable]$GOST_R_52535_1_2006 = @{
             "А" = "A"
             "Б" = "B"
             "В" = "V"
@@ -120,9 +144,7 @@ function ConvertTo-Translit {
             "Я" = "IA"
             "ЬЕ" = "E"
         }
-    }
 
-    Process {
         Switch($Standard) {
             "bgn-pcgn-1947" {
                 [Hashtable]$SelectedStandardSet = $BGN_PCGN_1947
@@ -131,29 +153,42 @@ function ConvertTo-Translit {
                 [Hashtable]$SelectedStandardSet = $GOST_R_52535_1_2006
             }
         }
+    }
 
-        [Array]$NewString, [Array]$NewWordArray = @()
+    process {
         [Array]$String = $String.Split(" ")
+        [Array]$NewString, [Array]$NewWordArray, [Array]$StringCommit = @()
 
-        ForEach ($Word in $String) {
-            ForEach ($Char in $Word.ToCharArray()) {
-                If (($Char -eq "Е") -and ($Previous -eq "Ь")) {
-                    $NewWordArray += $SelectedStandardSet["ЬЕ"]
+        foreach ($Word in $String) {
+            [Array]$NewWordArray = @()
+            [String]$WordCommit = ""
+
+            foreach ($Char in $Word.ToCharArray()) {
+                if (($Char -eq "Е") -and ($Previous -eq "Ь")) {
+                    if ($Char.ToString() -ceq $Char.ToString().ToUpper()) {
+                        $NewWordArray += $SelectedStandardSet["ЬЕ"]
+                    }
+                    else {
+                        $NewWordArray += $SelectedStandardSet["ЬЕ"].ToLower()
+                    }
                 }
-                Else {
-                    $NewWordArray += $SelectedStandardSet["$Char"]
+                else {
+                    if ($Char.ToString() -ceq $Char.ToString().ToUpper()) {
+                        $NewWordArray += $SelectedStandardSet[$Char.ToString()]
+                    }
+                    else {
+                        $NewWordArray += $SelectedStandardSet[$Char.ToString()].ToLower()
+                    }
                 }
                 [String]$Previous = $Char
             }
-            [String]$WordCommit = $NewWordArray -join ""
-            [Array]$StringCommit += $WordCommit
-            $NewWordArray = @()
-            $WordCommit = @()
+            $WordCommit = $NewWordArray -join ""
+            $StringCommit += $WordCommit
         }
 
         $Result = $StringCommit -join " "
 
-        Switch($Format) {
+        switch($Format) {
             "Uppercase" {
                 $Result = $Result.ToUpper()
             }
