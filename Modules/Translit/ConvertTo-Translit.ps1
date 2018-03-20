@@ -1,9 +1,8 @@
 #PowerShell
-#Requires -Version 3
+#Requires -Version 3.0
 
 
-#Encoding -Required "Windows 1251"
-Function ConvertTo-Translit {
+function ConvertTo-Translit {
     <#
     .SYNOPSIS
         Function for transliteration russian symbols with standards and rules.
@@ -22,49 +21,126 @@ Function ConvertTo-Translit {
         https://github.com/alseg/ConvertTo-Translit
 
     .NOTES
-        ToDo-List:
-        * Task
+        .
 
     .EXAMPLE
-        PS> ConvertTo-Translit -String "»‚‡ÌÓ‚ œ∏Ú √ÂÌÌ‡‰¸Â‚Ë˜" -Standard gost-r-52535.1-2006
+        PS> ConvertTo-Translit -String "–ò–≤–∞–Ω–æ–≤ –ü—ë—Ç—Ä –ì–µ–Ω–Ω–∞–¥—å–µ–≤–∏—á" -Standard gost-r-52535.1-2006
     #>
 
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory)]
-        [String]$String,
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [String]
+        $String,
 
         [Parameter()]
         [ValidateSet("bgn-pcgn-1947", "gost-r-52535.1-2006")]
-        [String]$Standard = "bgn-pcgn-1947",
+        [String]
+        $Standard = "bgn-pcgn-1947",
 
         [Parameter()]
         [ValidateSet("Uppercase", "Lowercase", "Capitalize")]
-        [String]$Format = "Capitalize"
+        [String]
+        $Format
     )
 
+    Process {
+        $BGN_PCGN_1947 = @{
+                "–ê" = "A";
+                "–ë" = "B";
+                "–í" = "V";
+                "–ì" = "G";
+                "–î" = "D";
+                "–ï" = "E";
+                "–Å" = "E";
+                "–ñ" = "ZH";
+                "–ó" = "Z";
+                "–ò" = "I";
+                "–ô" = "Y";
+                "–ö" = "K";
+                "–õ" = "L";
+                "–ú" = "M";
+                "–ù" = "N";
+                "–û" = "O";
+                "–ü" = "P";
+                "–†" = "R";
+                "–°" = "S";
+                "–¢" = "T";
+                "–£" = "U";
+                "–§" = "F";
+                "–•" = "KH";
+                "–¶" = "TS";
+                "–ß" = "CH";
+                "–®" = "SH";
+                "–©" = "SHCH";
+                "–¨" = "";
+                "–´" = "Y";
+                "–™" = "";
+                "–≠" = "E";
+                "–Æ" = "YU";
+                "–Ø" = "YA";
+                "–¨–ï" = "YE"
+            }
 
-    Function Start-Main {
-        [CmdletBinding()]
-        Param(
-            [Parameter(Mandatory)]
-            [String]$String,
+        $GOST_R_52535_1_2006 = @{
+                "–ê" = "A";
+                "–ë" = "B";
+                "–í" = "V";
+                "–ì" = "G";
+                "–î" = "D";
+                "–ï" = "E";
+                "–Å" = "E";
+                "–ñ" = "ZH";
+                "–ó" = "Z";
+                "–ò" = "I";
+                "–ô" = "I";
+                "–ö" = "K";
+                "–õ" = "L";
+                "–ú" = "M";
+                "–ù" = "N";
+                "–û" = "O";
+                "–ü" = "P";
+                "–†" = "R";
+                "–°" = "S";
+                "–¢" = "T";
+                "–£" = "U";
+                "–§" = "F";
+                "–•" = "KH";
+                "–¶" = "TC";
+                "–ß" = "CH";
+                "–®" = "SH";
+                "–©" = "SHCH";
+                "–¨" = "";
+                "–´" = "Y";
+                "–™" = "";
+                "–≠" = "E";
+                "–Æ" = "IU";
+                "–Ø" = "IA";
+                "–¨–ï" = "E"
+        }
 
-            [Parameter(Mandatory)]
-            [Hashtable]$StandardSet
-        )
+        Switch($Standard) {
+            "bgn-pcgn-1947" {
+                [Hashtable]$SelectedStandardSet = $BGN_PCGN_1947
+            }
+            "gost-r-52535.1-2006" {
+                [Hashtable]$SelectedStandardSet = $GOST_R_52535_1_2006
+            }
+            Default {
+                Write-Error "Error"
+            }
+        }
 
-
-        [Array]$String = $String.Split(" ")
         [Array]$NewString, [Array]$NewWordArray = @()
+        [Array]$String = $String.Split(" ")
 
         ForEach ($Word in $String) {
             ForEach ($Char in $Word.ToCharArray()) {
-                If (($Char -eq "≈") -and ($Previous -eq "‹")) {
-                    $NewWordArray += $StandardSet["‹≈"]
+                If (($Char -eq "–ï") -and ($Previous -eq "–¨")) {
+                    $NewWordArray += $SelectedStandardSet["–¨–ï"]
                 }
                 Else {
-                    $NewWordArray += $StandardSet["$Char"]
+                    $NewWordArray += $SelectedStandardSet["$Char"]
                 }
                 [String]$Previous = $Char
             }
@@ -73,104 +149,30 @@ Function ConvertTo-Translit {
             [Array]$StringCommit += $WordCommit
             $WordCommit = @()
         }
-        Return $StringCommit -join " "
+
+        $Result = $StringCommit -join " "
+
+        Switch($Format) {
+            "Uppercase" {
+                $Result = $Result.ToUpper()
+            }
+            "Lowercase" {
+                $Result = $Result.ToLower()
+            }
+            "Capitalize" {
+                $Result = (Get-Culture).TextInfo.ToTitleCase($Result.ToLower())
+            }
+            Default {
+                Break
+            }
+        }
+        
+        $Result
     }
-
-
-    $BGN_PCGN_1947 = @{
-            "¿" = "A";
-            "¡" = "B";
-            "¬" = "V";
-            "√" = "G";
-            "ƒ" = "D";
-            "≈" = "E";
-            "®" = "E";
-            "∆" = "ZH";
-            "«" = "Z";
-            "»" = "I";
-            "…" = "Y";
-            " " = "K";
-            "À" = "L";
-            "Ã" = "M";
-            "Õ" = "N";
-            "Œ" = "O";
-            "œ" = "P";
-            "–" = "R";
-            "—" = "S";
-            "“" = "T";
-            "”" = "U";
-            "‘" = "F";
-            "’" = "KH";
-            "÷" = "TS";
-            "◊" = "CH";
-            "ÿ" = "SH";
-            "Ÿ" = "SHCH";
-            "‹" = "";
-            "€" = "Y";
-            "" = "";
-            "›" = "E";
-            "ﬁ" = "YU";
-            "ﬂ" = "YA";
-            "‹≈" = "YE"
-        }
-
-    $GOST_R_52535_1_2006 = @{
-            "¿" = "A";
-            "¡" = "B";
-            "¬" = "V";
-            "√" = "G";
-            "ƒ" = "D";
-            "≈" = "E";
-            "®" = "E";
-            "∆" = "ZH";
-            "«" = "Z";
-            "»" = "I";
-            "…" = "I";
-            " " = "K";
-            "À" = "L";
-            "Ã" = "M";
-            "Õ" = "N";
-            "Œ" = "O";
-            "œ" = "P";
-            "–" = "R";
-            "—" = "S";
-            "“" = "T";
-            "”" = "U";
-            "‘" = "F";
-            "’" = "KH";
-            "÷" = "TC";
-            "◊" = "CH";
-            "ÿ" = "SH";
-            "Ÿ" = "SHCH";
-            "‹" = "";
-            "€" = "Y";
-            "⁄" = "";
-            "›" = "E";
-            "ﬁ" = "IU";
-            "ﬂ" = "IA";
-            "‹≈" = "E"
-    }
-
-    Switch($Standard) {
-        "gost-r-52535.1-2006" {
-            $Result = (Start-Main -String $String -StandardSet $GOST_R_52535_1_2006)
-        }
-        Default {
-            $Result = (Start-Main -String $String -StandardSet $BGN_PCGN_1947)
-        }
-    }
-
-    Switch($Format) {
-        "Uppercase" {
-            $Result = $Result.ToUpper()
-        }
-        "Lowercase" {
-            $Result = $Result.ToLower()
-        }
-        Default {
-            $Result = (Get-Culture).TextInfo.ToTitleCase($Result.ToLower())
-        }
-    }
-
-    Return $Result
 }
+
+
+
+
+
+"–ò–≤–∞–Ω–æ–≤ –ò–≤–∞–Ω –ò–≤–∞–Ω–æ–≤–∏—á –∞–∞–ê–ê–ê–ê–∞–∞–∞–∞–∞" | ConvertTo-Translit
