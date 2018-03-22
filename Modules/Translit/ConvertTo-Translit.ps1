@@ -19,6 +19,9 @@ function ConvertTo-Translit {
 
     .PARAMETER Format
         Format for output, "as is" by default.
+    
+    .PARAMETER ExcludeSpecialSymbols
+        Exclude from output symbols like "Ё", "'", "`", etc.
 
     .LINK
         https://github.com/alseg/ConvertTo-Translit
@@ -60,14 +63,18 @@ function ConvertTo-Translit {
         $String,
 
         [Parameter()]
-        [ValidateSet("bgn-pcgn-1947", "gost-r-52535.1-2006")]
+        [ValidateSet("bgn-pcgn-1947", "gost-r-52535.1-2006", "gost-7.79-2000")]
         [String]
         $Standard = "bgn-pcgn-1947",
 
         [Parameter()]
-        [ValidateSet("Uppercase", "Lowercase", "Capitalize")]
+        [ValidateSet("Original", "Uppercase", "Lowercase", "Capitalize")]
         [String]
-        $Format
+        $Format = "Original",
+
+        [Parameter()]
+        [Bool]
+        $ExcludeSpecialSymbols = $false
     )
 
     begin {
@@ -78,7 +85,7 @@ function ConvertTo-Translit {
             "Г" = "G"
             "Д" = "D"
             "Е" = "E"
-            "Ё" = "E"
+            "Ё" = "Ё"
             "Ж" = "ZH"
             "З" = "Z"
             "И" = "I"
@@ -99,13 +106,12 @@ function ConvertTo-Translit {
             "Ч" = "CH"
             "Ш" = "SH"
             "Щ" = "SHCH"
-            "Ь" = ""
+            "Ь" = "`'"
             "Ы" = "Y"
-            "Ъ" = ""
+            "Ъ" = "`""
             "Э" = "E"
             "Ю" = "YU"
             "Я" = "YA"
-            "ЬЕ" = "YE"
         }
 
         [Hashtable]$GOST_R_52535_1_2006 = @{
@@ -142,53 +148,173 @@ function ConvertTo-Translit {
             "Э" = "E"
             "Ю" = "IU"
             "Я" = "IA"
-            "ЬЕ" = "E"
         }
 
-        Switch($Standard) {
-            "bgn-pcgn-1947" {
-                [Hashtable]$SelectedStandardSet = $BGN_PCGN_1947
-            }
-            "gost-r-52535.1-2006" {
-                [Hashtable]$SelectedStandardSet = $GOST_R_52535_1_2006
-            }
+        [Hashtable]$GOST_7_79_2000 = @{
+            "А" = "A"
+            "Б" = "B"
+            "В" = "V"
+            "Г" = "G"
+            "Д" = "D"
+            "Е" = "E"
+            "Ё" = "YO"
+            "Ж" = "ZH"
+            "З" = "Z"
+            "И" = "I"
+            "Й" = "J"
+            "К" = "K"
+            "Л" = "L"
+            "М" = "M"
+            "Н" = "N"
+            "О" = "O"
+            "П" = "P"
+            "Р" = "R"
+            "С" = "S"
+            "Т" = "T"
+            "У" = "U"
+            "Ф" = "F"
+            "Х" = "X"
+            "Ц" = "CZ"
+            "Ч" = "CH"
+            "Ш" = "SH"
+            "Щ" = "SHH"
+            "Ь" = "`'"
+            "Ы" = "Y`'"
+            "Ъ" = "`""
+            "Э" = "E`'"
+            "Ю" = "YU"
+            "Я" = "YA"
         }
     }
 
     process {
-        [Array]$String = $String.Split(" ")
-        [Array]$NewString, [Array]$NewWordArray, [Array]$StringCommit = @()
+        function CharIsUppercase() {
+            ($args[0].ToString() -ceq $args[0].ToString().ToUpper())
+        }
 
-        foreach ($Word in $String) {
-            [Array]$NewWordArray = @()
-            [String]$WordCommit = ""
+        if ($String -cmatch "[A-Z,a-z,0-9]") {
+            Write-Error -message "String consist non-cyrillic symbols or numbers"
+            exit
+        }
 
+        if ($Standard -eq "bgn-pcgn-1947") {
+            Write-Warning -message "BGN/PCGN 1947 System: Checked for validity and accuracy - February 2018`nhttps://www.gov.uk/government/publications/romanisation-systems"
+        }
+
+        [Array]$NewString, [Array]$StringCommit = @()
+
+        foreach ($Word in [Array]$String.Split(" ")) {
+            [String]$NewWord, [String]$WordCommit = ""
             foreach ($Char in $Word.ToCharArray()) {
-                if (($Char -eq "Е") -and ($Previous -eq "Ь")) {
-                    if ($Char.ToString() -ceq $Char.ToString().ToUpper()) {
-                        $NewWordArray += $SelectedStandardSet["ЬЕ"]
+                switch($Standard){
+                    "bgn-pcgn-1947" {
+                        if (($Char -eq "Е") -and `
+                            (($PreviousChar -eq "А") `
+                            -or ($PreviousChar -eq "Е") `
+                            -or ($PreviousChar -eq "Ё") `
+                            -or ($PreviousChar -eq "И") `
+                            -or ($PreviousChar -eq "О") `
+                            -or ($PreviousChar -eq "У") `
+                            -or ($PreviousChar -eq "Ы") `
+                            -or ($PreviousChar -eq "Э") `
+                            -or ($PreviousChar -eq "Ю") `
+                            -or ($PreviousChar -eq "Й") `
+                            -or ($PreviousChar -eq "Ъ") `
+                            -or ($PreviousChar -eq "Ь") `
+                            )) {
+                            if (CharIsUppercase($Char)) {
+                                $NewWord += "YE"
+                            }
+                            else {
+                                $NewWord += "YE".ToLower()
+                            }
+                        }
+                        elseif (($Char -eq "Ё") -and `
+                            (($PreviousChar -eq "А") `
+                            -or ($PreviousChar -eq "Е") `
+                            -or ($PreviousChar -eq "Ё") `
+                            -or ($PreviousChar -eq "И") `
+                            -or ($PreviousChar -eq "О") `
+                            -or ($PreviousChar -eq "У") `
+                            -or ($PreviousChar -eq "Ы") `
+                            -or ($PreviousChar -eq "Э") `
+                            -or ($PreviousChar -eq "Ю") `
+                            -or ($PreviousChar -eq "Й") `
+                            -or ($PreviousChar -eq "Ъ") `
+                            -or ($PreviousChar -eq "Ь") `
+                            )) {
+                            if (CharIsUppercase($Char)) {
+                                $NewWord += "YЁ"
+                            }
+                            else {
+                                $NewWord += "YЁ".ToLower()
+                            }
+                        }
+                        else {
+                            if (CharIsUppercase($Char)) {
+                                $NewWord += $BGN_PCGN_1947[$Char.ToString()]
+                            }
+                            else {
+                                $NewWord += $BGN_PCGN_1947[$Char.ToString()].ToLower()
+                            }
+                        }
+                        $PreviousChar = $Char
                     }
-                    else {
-                        $NewWordArray += $SelectedStandardSet["ЬЕ"].ToLower()
+                    "gost-r-52535.1-2006" {
+                        if (CharIsUppercase($Char)) {
+                            $NewWord += $GOST_R_52535_1_2006[$Char.ToString()]
+                        }
+                        else {
+                            $NewWord += $GOST_R_52535_1_2006[$Char.ToString()].ToLower()
+                        }
+                    }
+                    "gost-7.79-2000" {
+                        if (($Char -eq "Ц") -and `
+                            (($PreviousChar -eq "И") `
+                            -or ($PreviousChar -eq "Е") `
+                            -or ($PreviousChar -eq "Ы") `
+                            -or ($PreviousChar -eq "Й") `
+                            )) {
+                            if (CharIsUppercase($Char)) {
+                                $NewWord += "C"
+                            }
+                            else {
+                                $NewWord += "C".ToLower()
+                            }
+                        }
+                        else {
+                            if (CharIsUppercase($Char)) {
+                                $NewWord += $GOST_7_79_2000[$Char.ToString()]
+                            }
+                            else {
+                                $NewWord += $GOST_7_79_2000[$Char.ToString()].ToLower()
+                            }
+                        }
+                        $PreviousChar = $Char
                     }
                 }
-                else {
-                    if ($Char.ToString() -ceq $Char.ToString().ToUpper()) {
-                        $NewWordArray += $SelectedStandardSet[$Char.ToString()]
-                    }
-                    else {
-                        $NewWordArray += $SelectedStandardSet[$Char.ToString()].ToLower()
-                    }
-                }
-                [String]$Previous = $Char
             }
-            $WordCommit = $NewWordArray -join ""
+
+            $PreviousChar = ""
+            $WordCommit = $NewWord
             $StringCommit += $WordCommit
+
         }
 
         $Result = $StringCommit -join " "
 
+        if ($ExcludeSpecialSymbols) {
+            $Result = $Result.Replace("Ё","E")
+            $Result = $Result.Replace("ё","e")
+            $Result = $Result.Replace("`"","")
+            $Result = $Result.Replace("`'","")
+            $Result = $Result.Replace("``","")
+        }
+
         switch($Format) {
+            "Original" {
+                break
+            }
             "Uppercase" {
                 $Result = $Result.ToUpper()
             }
