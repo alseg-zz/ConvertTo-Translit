@@ -12,6 +12,5 @@ Get-Help ConvertTo-Translit -Example
 
 ## Syntax:
 ```
-SYNTAX:
-    ConvertTo-Translit [-String] <String> [[-Standard] <String>] [[-Format] <String>] [-ExcludeSpecialSymbols] <Boolean>] [<CommonParameters>]
+ConvertTo-Translit [-String] <String> [[-Standard] <String>] [[-Format] <String>] [-ExcludeSpecialSymbols] [<CommonParameters>]
 ```

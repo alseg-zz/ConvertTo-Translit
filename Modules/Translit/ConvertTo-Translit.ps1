@@ -52,6 +52,11 @@ function ConvertTo-Translit {
 
         Ivan Fedorovich Kruzenshtern
         Pechkin Igor Ivanovich
+
+    .EXAMPLE
+       "Сидоров Авдотий Геннадьевич" | ConvertTo-Translit -ExcludeSpecialSymbols
+
+        Sidorov Avdotiy Gennadyevich"
     #>
 
     [CmdletBinding()]
@@ -76,7 +81,7 @@ function ConvertTo-Translit {
 
         [Parameter()]
         [Switch]
-        $ExcludeSpecialSymbols = $false
+        $ExcludeSpecialSymbols
     )
 
     begin {
