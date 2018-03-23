@@ -193,9 +193,9 @@ function ConvertTo-Translit {
             ($args[0].ToString() -ceq $args[0].ToString().ToUpper())
         }
 
-        if ($String -cmatch "[A-Za-z0-9]") {
-            Write-Error -message "String consist non-cyrillic symbols or numbers"
-            Return "String consist non-cyrillic symbols or numbers"
+        if ($String -cmatch "[A-Za-z0-9\~\#\%\&\*\{\}\\\:\<\>\?\/\|\+\`"\`'\^]") {
+            Write-Error -message "String consist non-cyrillic symbols, non-literal symbols or numbers"
+            Return "String consist non-cyrillic symbols, non-literal symbols or numbers"
         }
 
         if ($Standard -eq "bgn-pcgn-1947") {
