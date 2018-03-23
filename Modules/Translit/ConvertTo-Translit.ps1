@@ -5,14 +5,14 @@
 function ConvertTo-Translit {
     <#
     .SYNOPSIS
-        Function for transliteration russian symbols with standards and rules.
+        Function for transliteration russian-english with standards and rules.
 
     .DESCRIPTION
-        Function for transliteration russian symbols with standards and rules.
+        Function for transliteration russian-english with standards and rules.
         .
 
     .PARAMETER String
-        String for transliteration.
+        Input string for transliteration.
 
     .PARAMETER Standard
         Standard name for transliteration.
@@ -21,7 +21,7 @@ function ConvertTo-Translit {
         Format for output, "as is" by default.
     
     .PARAMETER ExcludeSpecialSymbols
-        Exclude from output symbols like "Ё", "'", "`", etc.
+        Exclude from output symbols like '", "`", etc.
 
     .LINK
         https://github.com/alseg/ConvertTo-Translit
@@ -55,6 +55,7 @@ function ConvertTo-Translit {
     #>
 
     [CmdletBinding()]
+    [OutputType([String])]
     Param(
         [Parameter(Mandatory,
         ValueFromPipeline,
@@ -192,13 +193,13 @@ function ConvertTo-Translit {
             ($args[0].ToString() -ceq $args[0].ToString().ToUpper())
         }
 
-        if ($String -cmatch "[A-Z,a-z,0-9]") {
+        if ($String -cmatch "[A-Za-z0-9]") {
             Write-Error -message "String consist non-cyrillic symbols or numbers"
-            exit
+            Return "String consist non-cyrillic symbols or numbers"
         }
 
         if ($Standard -eq "bgn-pcgn-1947") {
-            Write-Warning -message "BGN/PCGN 1947 System: Checked for validity and accuracy - February 2018`nhttps://www.gov.uk/government/publications/romanisation-systems"
+            Write-Verbose -message "BGN/PCGN 1947 System: Checked for validity and accuracy - February 2018`nhttps://www.gov.uk/government/publications/romanisation-systems"
         }
 
         [Array]$NewString, [Array]$StringCommit = @()
@@ -208,20 +209,7 @@ function ConvertTo-Translit {
             foreach ($Char in $Word.ToCharArray()) {
                 switch($Standard){
                     "bgn-pcgn-1947" {
-                        if (($Char -eq "Е") -and `
-                            (($PreviousChar -eq "А") `
-                            -or ($PreviousChar -eq "Е") `
-                            -or ($PreviousChar -eq "Ё") `
-                            -or ($PreviousChar -eq "И") `
-                            -or ($PreviousChar -eq "О") `
-                            -or ($PreviousChar -eq "У") `
-                            -or ($PreviousChar -eq "Ы") `
-                            -or ($PreviousChar -eq "Э") `
-                            -or ($PreviousChar -eq "Ю") `
-                            -or ($PreviousChar -eq "Й") `
-                            -or ($PreviousChar -eq "Ъ") `
-                            -or ($PreviousChar -eq "Ь") `
-                            )) {
+                        if (($Char -eq "Е") -and (($PreviousChar -match "А|Е|Ё|И|О|У|Ы|Э|Ю|Й|Ъ|Ь"))) {
                             if (CharIsUppercase($Char)) {
                                 $NewWord += "YE"
                             }
@@ -229,20 +217,7 @@ function ConvertTo-Translit {
                                 $NewWord += "YE".ToLower()
                             }
                         }
-                        elseif (($Char -eq "Ё") -and `
-                            (($PreviousChar -eq "А") `
-                            -or ($PreviousChar -eq "Е") `
-                            -or ($PreviousChar -eq "Ё") `
-                            -or ($PreviousChar -eq "И") `
-                            -or ($PreviousChar -eq "О") `
-                            -or ($PreviousChar -eq "У") `
-                            -or ($PreviousChar -eq "Ы") `
-                            -or ($PreviousChar -eq "Э") `
-                            -or ($PreviousChar -eq "Ю") `
-                            -or ($PreviousChar -eq "Й") `
-                            -or ($PreviousChar -eq "Ъ") `
-                            -or ($PreviousChar -eq "Ь") `
-                            )) {
+                        elseif (($Char -eq "Ё") -and (($PreviousChar -match "А|Е|Ё|И|О|У|Ы|Э|Ю|Й|Ъ|Ь"))) {
                             if (CharIsUppercase($Char)) {
                                 $NewWord += "YЁ"
                             }
@@ -269,12 +244,7 @@ function ConvertTo-Translit {
                         }
                     }
                     "gost-7.79-2000" {
-                        if (($Char -eq "Ц") -and `
-                            (($PreviousChar -eq "И") `
-                            -or ($PreviousChar -eq "Е") `
-                            -or ($PreviousChar -eq "Ы") `
-                            -or ($PreviousChar -eq "Й") `
-                            )) {
+                        if (($Char -eq "Ц") -and (($PreviousChar -match "И|Е|Ы|Й"))) {
                             if (CharIsUppercase($Char)) {
                                 $NewWord += "C"
                             }
@@ -304,11 +274,7 @@ function ConvertTo-Translit {
         $Result = $StringCommit -join " "
 
         if ($ExcludeSpecialSymbols) {
-            $Result = $Result.Replace("Ё","E")
-            $Result = $Result.Replace("ё","e")
-            $Result = $Result.Replace("`"","")
-            $Result = $Result.Replace("`'","")
-            $Result = $Result.Replace("``","")
+            $Result = $Result -replace "([`"`'``])","" -replace "([Ё])","E" -replace "([ё])","e"
         }
 
         switch($Format) {
