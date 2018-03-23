@@ -60,6 +60,7 @@ function ConvertTo-Translit {
         [Parameter(Mandatory,
         ValueFromPipeline,
         HelpMessage = "Enter string for transliteration")]
+        [ValidateNotNullOrEmpty()]
         [String]
         $String,
 
@@ -193,7 +194,7 @@ function ConvertTo-Translit {
             ($args[0].ToString() -ceq $args[0].ToString().ToUpper())
         }
 
-        if ($String -cmatch "[^А-Яа-я ]") {
+        if ($String -match "[^а-яё ]") {
             Write-Error -message "String consist non-cyrillic symbols, non-literal symbols or numbers"
             Return "String consist non-cyrillic symbols, non-literal symbols or numbers"
         }
