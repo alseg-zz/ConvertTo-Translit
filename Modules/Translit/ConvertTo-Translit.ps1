@@ -274,7 +274,7 @@ function ConvertTo-Translit {
         $Result = $StringCommit -join " "
 
         if ($ExcludeSpecialSymbols) {
-            $Result = $Result -replace "([`"`'``])","" -replace "([Ё])","E" -replace "([ё])","e"
+            $Result = $Result.Replace("Ё", "E").Replace("ё", "e") -replace "([`"`'``])",""
         }
 
         switch($Format) {
