@@ -74,7 +74,7 @@ function ConvertTo-Translit {
         $Format = "Original",
 
         [Parameter()]
-        [Bool]
+        [Switch]
         $ExcludeSpecialSymbols = $false
     )
 
@@ -193,7 +193,7 @@ function ConvertTo-Translit {
             ($args[0].ToString() -ceq $args[0].ToString().ToUpper())
         }
 
-        if ($String -cmatch "[A-Za-z0-9\~\#\%\&\*\{\}\\\:\<\>\?\/\|\+\`"\`'\^]") {
+        if ($String -cmatch "[^А-Яа-я ]") {
             Write-Error -message "String consist non-cyrillic symbols, non-literal symbols or numbers"
             Return "String consist non-cyrillic symbols, non-literal symbols or numbers"
         }
@@ -274,8 +274,8 @@ function ConvertTo-Translit {
         $Result = $StringCommit -join " "
 
         if ($ExcludeSpecialSymbols) {
-            $Result = $Result.Replace("Ё", "E").Replace("ё", "e") -replace "([`"`'``])",""
-        }
+                $Result = $Result.Replace("Ё", "E").Replace("ё", "e") -replace "([`"`'``])",""
+            }
 
         switch($Format) {
             "Original" {
